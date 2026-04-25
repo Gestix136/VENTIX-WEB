@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block title %}Nueva Tienda — Ventix Admin{% endblock %}
+{% block content %}
+<div class="container" style="max-width:640px;">
+  <div class="page-header">
+    <a href="{{ url_for('admin_dashboard') }}" style="color:#1E88E5;font-size:13px;text-decoration:none;">← Volver al dashboard</a>
+    <div class="page-title" style="margin-top:8px;">➕ Nueva Tienda</div>
+    <div class="page-sub">Registra una nueva tienda y crea sus credenciales de acceso</div>
+  </div>
+
+  <form method="POST">
+    <!-- Datos de la tienda -->
+    <div class="card" style="margin-bottom:16px;">
+      <div style="font-weight:700;font-size:14px;margin-bottom:18px;color:#1E88E5;">🏪 Datos de la Tienda</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nombre de la tienda *</label>
+          <input type="text" name="nombre" class="form-control" placeholder="Ej: Abarrotes Xiomara" required>
+        </div>
+        <div class="form-group">
+          <label>Ciudad</label>
+          <input type="text" name="ciudad" class="form-control" placeholder="Ej: Monterrey, NL">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Dirección</label>
+        <input type="text" name="direccion" class="form-control" placeholder="Ej: Calle Juárez #123, Col. Centro">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Teléfono</label>
+          <input type="text" name="telefono" class="form-control" placeholder="Ej: 81 1234 5678">
+        </div>
+        <div class="form-group">
+          <label>Plan</label>
+          <select name="plan" class="form-control">
+            <option value="basico">Básico</option>
+            <option value="pro">Pro</option>
+            <option value="enterprise">Enterprise</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Credenciales del admin -->
+    <div class="card" style="margin-bottom:20px;">
+      <div style="font-weight:700;font-size:14px;margin-bottom:18px;color:#2E7D32;">🔑 Credenciales del Administrador</div>
+      <div class="form-group">
+        <label>Nombre del administrador</label>
+        <input type="text" name="nombre_admin" class="form-control" placeholder="Ej: María García">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Usuario de acceso *</label>
+          <input type="text" name="username" class="form-control" placeholder="Ej: xiomara" required>
+        </div>
+        <div class="form-group">
+          <label>Contraseña *</label>
+          <input type="password" name="password" class="form-control" placeholder="Mínimo 4 caracteres" required>
+        </div>
+      </div>
+      <div style="background:#E8F5E9;border:1px solid #A5D6A7;border-radius:8px;padding:10px 14px;font-size:12px;color:#2E7D32;">
+        💡 Estas credenciales serán las que el dueño de la tienda usará para entrar a Ventix.
+        Compártelas de forma segura.
+      </div>
+    </div>
+
+    <div style="display:flex;gap:12px;justify-content:flex-end;">
+      <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">Cancelar</a>
+      <button type="submit" class="btn btn-success">✅ Crear Tienda</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

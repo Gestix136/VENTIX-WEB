@@ -1,0 +1,356 @@
+{% extends 'base.html' %}
+{% block title %}Nueva Venta — Ventix{% endblock %}
+{% block extra_head %}
+<style>
+.pos-wrap{display:grid;grid-template-columns:1fr 420px;gap:16px;height:calc(100vh - 58px);padding:16px;}
+/* Panel izquierdo */
+.panel-buscar{background:white;border-radius:14px;border:1px solid #E0EAE0;display:flex;flex-direction:column;overflow:hidden;}
+.panel-header{padding:16px 20px;border-bottom:1px solid #F0F4FA;display:flex;align-items:center;justify-content:space-between;}
+.panel-title{font-size:15px;font-weight:700;color:#1A1A2E;}
+.chip{background:#E8F5E9;color:#2E7D32;font-size:11px;font-weight:700;padding:3px 10px;border-radius:8px;}
+.search-box{padding:14px 16px;border-bottom:1px solid #F5F5F5;}
+.search-input{width:100%;padding:11px 14px;border:2px solid #C8E6C9;border-radius:10px;font-size:14px;outline:none;transition:border-color .2s;}
+.search-input:focus{border-color:#2E7D32;background:#FAFFF9;}
+.resultados-list{flex:1;overflow-y:auto;padding:8px;}
+.result-item{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:9px;cursor:pointer;transition:background .15s;}
+.result-item:hover{background:#E8F5E9;}
+.result-nombre{font-size:13px;font-weight:600;color:#1A1A2E;}
+.result-precio{font-size:13px;font-weight:700;color:#2E7D32;}
+.result-stock{font-size:11px;color:#90A4AE;}
+.hint{padding:14px 16px;text-align:center;color:#B0BEC5;font-size:12px;border-top:1px solid #F5F5F5;}
+
+/* Panel derecho: carrito */
+.panel-carrito{background:white;border-radius:14px;border:1px solid #E0EAE0;display:flex;flex-direction:column;overflow:hidden;}
+.carrito-items{flex:1;overflow-y:auto;padding:8px 12px;}
+.carrito-item{display:flex;align-items:center;gap:10px;padding:10px;border-radius:9px;border:1px solid #F0F4FA;margin-bottom:6px;background:#FAFFF9;}
+.item-nombre{flex:1;font-size:13px;font-weight:600;color:#1A1A2E;}
+.item-precio{font-size:12px;color:#78909C;}
+.qty-ctrl{display:flex;align-items:center;gap:6px;}
+.qty-btn{width:26px;height:26px;border:none;border-radius:6px;cursor:pointer;font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+.qty-btn.minus{background:#FFEBEE;color:#C62828;}
+.qty-btn.plus{background:#E8F5E9;color:#2E7D32;}
+.qty-btn:hover{opacity:.8;}
+.qty-num{min-width:24px;text-align:center;font-size:14px;font-weight:700;}
+.item-sub{font-size:13px;font-weight:700;color:#1A1A2E;min-width:60px;text-align:right;}
+.item-del{background:#FFEBEE;color:#C62828;border:none;width:24px;height:24px;border-radius:5px;cursor:pointer;font-size:12px;}
+.item-del:hover{background:#E53935;color:white;}
+.carrito-vacio{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#B0BEC5;padding:40px;text-align:center;}
+.carrito-vacio-icon{font-size:48px;margin-bottom:12px;opacity:.4;}
+
+/* Panel total */
+.panel-total{padding:16px;border-top:1px solid #E8F5E9;background:#F1F8E9;}
+.total-row{display:flex;justify-content:space-between;align-items:center;}
+.total-label{font-size:11px;font-weight:700;color:#2E7D32;letter-spacing:.5px;text-transform:uppercase;}
+.total-amount{font-size:34px;font-weight:800;color:#1A1A2E;}
+.metodos{display:flex;gap:8px;margin:12px 0;}
+.metodo-btn{flex:1;padding:10px;border-radius:9px;border:2px solid #E0E0E0;background:#F5F5F5;color:#90A4AE;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;}
+.metodo-btn.active-ef{border-color:#2E7D32;background:#E8F5E9;color:#2E7D32;}
+.metodo-btn.active-tar{border-color:#1E88E5;background:#E3F2FD;color:#1E88E5;}
+.btns-accion{display:grid;grid-template-columns:1fr 2fr;gap:10px;}
+.btn-cancelar{padding:13px;background:white;color:#C62828;border:2px solid #FFCDD2;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;}
+.btn-cancelar:hover{background:#FFEBEE;}
+.btn-cobrar{padding:13px;background:#2E7D32;color:white;border:none;border-radius:10px;font-size:16px;font-weight:800;cursor:pointer;letter-spacing:.5px;}
+.btn-cobrar:hover{background:#1B5E20;}
+
+/* Modal cobro */
+.cobro-total{background:linear-gradient(135deg,#0D47A1,#1E88E5);border-radius:12px;padding:18px 20px;margin-bottom:16px;}
+.cobro-etiq{color:#BBDEFB;font-size:12px;}
+.cobro-monto{color:white;font-size:30px;font-weight:800;}
+.cambio-box{background:#E8F5E9;border:1px solid #A5D6A7;border-radius:9px;padding:12px 16px;text-align:center;font-size:20px;font-weight:700;color:#2E7D32;margin:10px 0;}
+.cambio-box.negativo{background:#FFEBEE;border-color:#FFCDD2;color:#C62828;}
+
+@media(max-width:900px){
+  .pos-wrap{grid-template-columns:1fr;height:auto;}
+  .panel-buscar{min-height:340px;}
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pos-wrap">
+
+  <!-- Panel izquierdo: búsqueda -->
+  <div class="panel-buscar">
+    <div class="panel-header">
+      <span class="panel-title">🔍 Buscar Producto</span>
+      <span class="chip">F2 = Cobrar</span>
+    </div>
+    <div class="search-box">
+      <input type="text" id="searchInput" class="search-input"
+             placeholder="Escribe nombre o escanea código de barras..." autocomplete="off">
+    </div>
+    <div class="resultados-list" id="resultados"></div>
+    <div class="hint">💡 Doble clic o Enter para agregar al carrito</div>
+  </div>
+
+  <!-- Panel derecho: carrito -->
+  <div class="panel-carrito">
+    <div class="panel-header">
+      <span class="panel-title">🛒 Carrito</span>
+      <span id="badge-items" class="chip" style="background:#E3F2FD;color:#1E88E5;">0 artículos</span>
+    </div>
+
+    <div id="carrito-body" class="carrito-items">
+      <div class="carrito-vacio" id="carrito-vacio">
+        <div class="carrito-vacio-icon">🛒</div>
+        <div>El carrito está vacío</div>
+        <div style="font-size:11px;margin-top:4px;">Busca y agrega productos</div>
+      </div>
+    </div>
+
+    <div class="panel-total">
+      <div class="total-row">
+        <span class="total-label">Total a cobrar</span>
+      </div>
+      <div class="total-amount" id="total-display">$ 0.00</div>
+
+      <div class="metodos">
+        <button class="metodo-btn active-ef" id="btn-efectivo" onclick="setMetodo('Efectivo')">💵 Efectivo</button>
+        <button class="metodo-btn" id="btn-tarjeta" onclick="setMetodo('Tarjeta')">💳 Tarjeta</button>
+      </div>
+
+      <div class="btns-accion">
+        <button class="btn-cancelar" onclick="cancelarVenta()">🗑 Cancelar</button>
+        <button class="btn-cobrar" onclick="abrirCobro()">COBRAR [F2]</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de cobro -->
+<div class="modal-overlay" id="modal-cobro">
+  <div class="modal">
+    <div class="modal-title">💵 Cobrar Venta</div>
+    <div class="cobro-total">
+      <div class="cobro-etiq">Total a cobrar</div>
+      <div class="cobro-monto" id="cobro-total-txt">$ 0.00</div>
+    </div>
+    <div id="seccion-efectivo">
+      <div class="form-group">
+        <label>Monto recibido del cliente</label>
+        <input type="number" id="inp-recibido" class="form-control"
+               style="font-size:18px;font-weight:700;" step="0.01" min="0"
+               oninput="calcCambio()" placeholder="$ 0.00">
+      </div>
+      <div class="cambio-box" id="cambio-box">Cambio: $ 0.00</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-cobro')">Cancelar</button>
+      <button class="btn btn-success" onclick="confirmarCobro()">✅ Confirmar Cobro</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal venta exitosa -->
+<div class="modal-overlay" id="modal-exito">
+  <div class="modal" style="text-align:center;">
+    <div style="font-size:56px;margin-bottom:12px;">✅</div>
+    <div style="font-size:20px;font-weight:800;color:#2E7D32;margin-bottom:6px;">¡Venta Registrada!</div>
+    <div id="exito-info" style="color:#546E7A;font-size:14px;line-height:1.8;"></div>
+    <button class="btn btn-success" style="margin-top:20px;width:100%;" onclick="nuevaVenta()">
+      Nueva Venta
+    </button>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let carrito = [];
+let metodo  = 'Efectivo';
+let searchTimer = null;
+
+// ── Búsqueda ────────────────────────────────────────────────────
+document.getElementById('searchInput').addEventListener('input', function(){
+  clearTimeout(searchTimer);
+  const q = this.value.trim();
+  if(!q){ document.getElementById('resultados').innerHTML = ''; return; }
+  searchTimer = setTimeout(() => buscar(q), 220);
+});
+
+document.getElementById('searchInput').addEventListener('keydown', function(e){
+  if(e.key === 'Enter'){
+    const items = document.querySelectorAll('.result-item');
+    if(items.length === 1) items[0].click();
+  }
+});
+
+async function buscar(q){
+  const res  = await fetch(`/api/productos/buscar?q=${encodeURIComponent(q)}`);
+  const data = await res.json();
+  const cont = document.getElementById('resultados');
+  cont.innerHTML = '';
+  if(!data.length){
+    cont.innerHTML = '<div style="text-align:center;color:#B0BEC5;padding:24px;font-size:13px;">Sin resultados</div>';
+    return;
+  }
+  data.forEach(p => {
+    const div = document.createElement('div');
+    div.className = 'result-item';
+    div.innerHTML = `
+      <div>
+        <div class="result-nombre">${p.nombre}</div>
+        <div class="result-stock">Stock: ${p.stock} ${p.categoria ? '· ' + p.categoria : ''}</div>
+      </div>
+      <div class="result-precio">$ ${p.precio.toFixed(2)}</div>
+    `;
+    div.ondblclick = () => agregarAlCarrito(p);
+    div.onclick    = () => agregarAlCarrito(p);
+    cont.appendChild(div);
+  });
+}
+
+// ── Carrito ─────────────────────────────────────────────────────
+function agregarAlCarrito(p){
+  const idx = carrito.findIndex(i => i.producto_id === p.id);
+  if(idx >= 0){
+    if(carrito[idx].cantidad < p.stock){
+      carrito[idx].cantidad++;
+    } else {
+      alert(`Sin stock suficiente para "${p.nombre}".`);
+      return;
+    }
+  } else {
+    carrito.push({producto_id:p.id, nombre:p.nombre, precio_unitario:p.precio,
+                  cantidad:1, stock_disponible:p.stock});
+  }
+  renderCarrito();
+  document.getElementById('searchInput').value = '';
+  document.getElementById('resultados').innerHTML = '';
+  document.getElementById('searchInput').focus();
+}
+
+function cambiarCantidad(idx, delta){
+  const item = carrito[idx];
+  const nueva = item.cantidad + delta;
+  if(nueva <= 0){ carrito.splice(idx, 1); }
+  else if(nueva > item.stock_disponible){ alert('Sin stock suficiente.'); return; }
+  else { item.cantidad = nueva; }
+  renderCarrito();
+}
+
+function quitarItem(idx){
+  carrito.splice(idx, 1);
+  renderCarrito();
+}
+
+function renderCarrito(){
+  const body  = document.getElementById('carrito-body');
+  const vacio = document.getElementById('carrito-vacio');
+  const total = carrito.reduce((s,i) => s + i.cantidad * i.precio_unitario, 0);
+  const num   = carrito.reduce((s,i) => s + i.cantidad, 0);
+
+  document.getElementById('total-display').textContent = `$ ${total.toFixed(2)}`;
+  document.getElementById('badge-items').textContent   = `${num} artículo${num!==1?'s':''}`;
+
+  if(!carrito.length){
+    body.innerHTML = '';
+    body.appendChild(vacio);
+    vacio.style.display = 'flex';
+    return;
+  }
+  vacio.style.display = 'none';
+  body.innerHTML = '';
+
+  carrito.forEach((item, idx) => {
+    const sub  = (item.cantidad * item.precio_unitario).toFixed(2);
+    const div  = document.createElement('div');
+    div.className = 'carrito-item';
+    div.innerHTML = `
+      <div style="flex:1;">
+        <div class="item-nombre">${item.nombre}</div>
+        <div class="item-precio">$ ${item.precio_unitario.toFixed(2)} c/u</div>
+      </div>
+      <div class="qty-ctrl">
+        <button class="qty-btn minus" onclick="cambiarCantidad(${idx},-1)">−</button>
+        <span class="qty-num">${item.cantidad}</span>
+        <button class="qty-btn plus" onclick="cambiarCantidad(${idx},1)">+</button>
+      </div>
+      <div class="item-sub">$ ${sub}</div>
+      <button class="item-del" onclick="quitarItem(${idx})">✕</button>
+    `;
+    body.appendChild(div);
+  });
+}
+
+// ── Método de pago ───────────────────────────────────────────────
+function setMetodo(m){
+  metodo = m;
+  document.getElementById('btn-efectivo').className = 'metodo-btn' + (m==='Efectivo' ? ' active-ef' : '');
+  document.getElementById('btn-tarjeta').className  = 'metodo-btn' + (m==='Tarjeta'  ? ' active-tar' : '');
+}
+
+// ── Cobro ────────────────────────────────────────────────────────
+function abrirCobro(){
+  if(!carrito.length){ alert('Agrega al menos un producto al carrito.'); return; }
+  const total = carrito.reduce((s,i) => s + i.cantidad * i.precio_unitario, 0);
+  document.getElementById('cobro-total-txt').textContent = `$ ${total.toFixed(2)}`;
+  document.getElementById('inp-recibido').value = total.toFixed(2);
+  document.getElementById('seccion-efectivo').style.display = metodo==='Efectivo' ? '' : 'none';
+  calcCambio();
+  document.getElementById('modal-cobro').classList.add('active');
+  setTimeout(() => document.getElementById('inp-recibido').select(), 100);
+}
+
+function calcCambio(){
+  const total    = carrito.reduce((s,i) => s + i.cantidad * i.precio_unitario, 0);
+  const recibido = parseFloat(document.getElementById('inp-recibido').value) || 0;
+  const cambio   = recibido - total;
+  const box      = document.getElementById('cambio-box');
+  box.textContent = `Cambio: $ ${cambio.toFixed(2)}`;
+  box.className   = 'cambio-box' + (cambio < 0 ? ' negativo' : '');
+}
+
+async function confirmarCobro(){
+  const total    = carrito.reduce((s,i) => s + i.cantidad * i.precio_unitario, 0);
+  const recibido = parseFloat(document.getElementById('inp-recibido').value) || 0;
+  if(metodo === 'Efectivo' && recibido < total){
+    alert('El monto recibido es menor al total.'); return;
+  }
+  const res = await fetch('/api/ventas/registrar', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ items: carrito, metodo_pago: metodo, caja: 'Caja 1' })
+  });
+  const data = await res.json();
+  if(data.ok){
+    cerrarModal('modal-cobro');
+    const cambio = metodo==='Efectivo' ? (recibido - total).toFixed(2) : '—';
+    document.getElementById('exito-info').innerHTML = `
+      <strong>Venta #${data.venta_id}</strong><br>
+      Total: $ ${total.toFixed(2)}<br>
+      Método: ${metodo}<br>
+      ${metodo==='Efectivo' ? `Cambio: $ ${cambio}` : ''}
+    `;
+    document.getElementById('modal-exito').classList.add('active');
+  } else {
+    alert('Error: ' + data.msg);
+  }
+}
+
+function cancelarVenta(){
+  if(!carrito.length) return;
+  if(confirm('¿Cancelar la venta y vaciar el carrito?')){
+    carrito = [];
+    renderCarrito();
+  }
+}
+
+function nuevaVenta(){
+  carrito = [];
+  renderCarrito();
+  cerrarModal('modal-exito');
+  document.getElementById('searchInput').focus();
+}
+
+function cerrarModal(id){
+  document.getElementById(id).classList.remove('active');
+}
+
+// F2 = cobrar
+document.addEventListener('keydown', e => {
+  if(e.key === 'F2'){ e.preventDefault(); abrirCobro(); }
+  if(e.key === 'Escape') document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
+});
+</script>
+{% endblock %}

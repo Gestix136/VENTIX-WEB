@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}Venta #{{ venta.id }} — Ventix{% endblock %}
+{% block content %}
+<div class="container" style="max-width:680px;">
+  <div class="page-header">
+    <a href="{{ url_for('reportes') }}" style="color:#1E88E5;font-size:13px;text-decoration:none;">← Volver a Reportes</a>
+    <div class="page-title" style="margin-top:8px;">🧾 Venta #{{ '%06d'|format(venta.id) }}</div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+      {% for label, val in [
+        ('📅 Fecha', venta.fecha),
+        ('👤 Cajero', venta.cajero),
+        ('💳 Método', venta.metodo_pago),
+        ('🖥️ Caja', venta.caja)
+      ] %}
+      <div style="background:#F8FBFF;border-radius:8px;padding:12px 14px;">
+        <div style="font-size:11px;color:#90A4AE;font-weight:600;">{{ label }}</div>
+        <div style="font-size:14px;font-weight:600;margin-top:3px;">{{ val }}</div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Producto</th><th>Cant.</th><th>Precio</th><th>Subtotal</th></tr></thead>
+        <tbody>
+          {% for d in detalle %}
+          <tr>
+            <td>{{ d.nombre }}</td>
+            <td>{{ d.cantidad }}</td>
+            <td>$ {{ '%.2f'|format(d.precio_unitario) }}</td>
+            <td style="font-weight:600;">$ {{ '%.2f'|format(d.subtotal) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div style="text-align:right;margin-top:16px;padding-top:16px;border-top:2px solid #E8F5E9;">
+      <span style="font-size:13px;color:#78909C;">TOTAL</span>
+      <span style="font-size:28px;font-weight:800;color:#2E7D32;margin-left:12px;">
+        $ {{ '%.2f'|format(venta.total) }}
+      </span>
+    </div>
+  </div>
+
+  <div style="text-align:center;">
+    <a href="{{ url_for('reportes') }}" class="btn btn-secondary">← Volver</a>
+  </div>
+</div>
+{% endblock %}

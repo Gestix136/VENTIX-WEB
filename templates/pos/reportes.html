@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+{% block title %}Reportes — Ventix{% endblock %}
+{% block extra_head %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+.reporte-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+.chart-wrap{background:white;border-radius:14px;border:1px solid #E0E8F0;padding:20px;}
+.chart-title{font-size:14px;font-weight:700;margin-bottom:14px;color:#1A1A2E;}
+@media(max-width:768px){.reporte-grid{grid-template-columns:1fr;}}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <div class="page-title">📊 Reportes</div>
+    <div class="page-sub">{{ tienda.nombre }}</div>
+  </div>
+
+  <!-- Filtro de fechas -->
+  <form method="GET" style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:20px;">
+    <div>
+      <label style="display:block;font-size:11px;font-weight:600;color:#78909C;margin-bottom:4px;">DESDE</label>
+      <input type="date" name="ini" value="{{ ini }}" class="form-control" style="width:160px;">
+    </div>
+    <div>
+      <label style="display:block;font-size:11px;font-weight:600;color:#78909C;margin-bottom:4px;">HASTA</label>
+      <input type="date" name="fin" value="{{ fin }}" class="form-control" style="width:160px;">
+    </div>
+    <button type="submit" class="btn btn-primary">Filtrar</button>
+    <a href="?ini={{ hoy }}&fin={{ hoy }}" class="btn btn-secondary">Hoy</a>
+    <a href="?ini={{ mes_ini }}&fin={{ fin }}" class="btn btn-secondary">Este mes</a>
+  </form>
+
+  <!-- Stats del período -->
+  <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px;">
+    <div class="stat-card">
+      <div class="stat-label">Ventas</div>
+      <div class="stat-value stat-blue">{{ resumen.num_ventas }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total del período</div>
+      <div class="stat-value stat-green">$ {{ '%.2f'|format(resumen.total) }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Efectivo</div>
+      <div class="stat-value stat-green">$ {{ '%.2f'|format(resumen.efectivo) }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Tarjeta</div>
+      <div class="stat-value stat-blue">$ {{ '%.2f'|format(resumen.tarjeta) }}</div>
+    </div>
+  </div>
+
+  <!-- Gráficas -->
+  <div class="reporte-grid">
+    <div class="chart-wrap">
+      <div class="chart-title">📈 Ventas por día</div>
+      <canvas id="chart-barras" height="180"></canvas>
+    </div>
+    <div class="chart-wrap">
+      <div class="chart-title">🥧 Métodos de pago</div>
+      <canvas id="chart-metodos" height="180"></canvas>
+    </div>
+  </div>
+
+  <!-- Más vendidos + Historial -->
+  <div class="reporte-grid">
+    <!-- Más vendidos -->
+    <div class="card" style="padding:0;overflow:hidden;">
+      <div style="padding:16px 20px;border-bottom:1px solid #F0F4FA;font-weight:700;font-size:14px;">🏆 Más Vendidos</div>
+      <div class="table-wrap" style="border:none;border-radius:0;">
+        <table>
+          <thead><tr><th>#</th><th>Producto</th><th>Unidades</th><th>Total</th></tr></thead>
+          <tbody>
+            {% for p in mas_vendidos %}
+            <tr>
+              <td style="font-weight:700;color:{% if loop.index<=3 %}#F57C00{% else %}#90A4AE{% endif %};">
+                {{ loop.index }}
+              </td>
+              <td>{{ p.nombre }}</td>
+              <td><strong>{{ p.unidades }}</strong></td>
+              <td style="color:#2E7D32;font-weight:600;">$ {{ '%.2f'|format(p.total) }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" style="text-align:center;color:#B0BEC5;padding:20px;">Sin datos</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Historial de ventas -->
+    <div class="card" style="padding:0;overflow:hidden;">
+      <div style="padding:16px 20px;border-bottom:1px solid #F0F4FA;font-weight:700;font-size:14px;">📋 Historial de Ventas</div>
+      <div class="table-wrap" style="border:none;border-radius:0;max-height:340px;overflow-y:auto;">
+        <table>
+          <thead><tr><th>#</th><th>Fecha</th><th>Total</th><th>Método</th><th>Caja</th><th></th></tr></thead>
+          <tbody>
+            {% for v in ventas %}
+            <tr>
+              <td style="color:#90A4AE;font-size:12px;">#{{ v.id }}</td>
+              <td style="font-size:12px;">{{ v.fecha[5:16] }}</td>
+              <td style="font-weight:700;color:#2E7D32;">$ {{ '%.2f'|format(v.total) }}</td>
+              <td>
+                <span class="badge {% if v.metodo_pago=='Efectivo' %}badge-success{% else %}badge-info{% endif %}">
+                  {{ v.metodo_pago }}
+                </span>
+              </td>
+              <td style="font-size:12px;color:#90A4AE;">{{ v.caja }}</td>
+              <td><a href="{{ url_for('ver_venta', vid=v.id) }}" class="btn btn-secondary btn-sm">Ver</a></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" style="text-align:center;color:#B0BEC5;padding:20px;">Sin ventas en este período</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const porDia = {{ por_dia|safe }};
+
+// Gráfica de barras
+const labels  = porDia.map(d => d.dia.slice(5));
+const totales = porDia.map(d => d.total);
+
+new Chart(document.getElementById('chart-barras'), {
+  type: 'bar',
+  data: {
+    labels,
+    datasets:[{
+      label:'Total vendido',
+      data: totales,
+      backgroundColor:'rgba(30,136,229,.75)',
+      borderRadius: 6,
+    }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{
+      y:{beginAtZero:true, grid:{color:'#F0F4FA'},
+         ticks:{callback:v=>'$'+v}},
+      x:{grid:{display:false}}
+    }
+  }
+});
+
+// Gráfica de métodos de pago
+const efectivo = {{ resumen.efectivo }};
+const tarjeta  = {{ resumen.tarjeta }};
+new Chart(document.getElementById('chart-metodos'), {
+  type: 'doughnut',
+  data:{
+    labels:['Efectivo','Tarjeta'],
+    datasets:[{
+      data:[efectivo, tarjeta],
+      backgroundColor:['#2E7D32','#1E88E5'],
+      borderWidth:0,
+    }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{position:'bottom'}}
+  }
+});
+</script>
+{% endblock %}
