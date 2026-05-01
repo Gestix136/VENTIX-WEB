@@ -17,7 +17,6 @@
     <div class="page-sub">{{ tienda.nombre }}</div>
   </div>
 
-  <!-- Filtro de fechas -->
   <form method="GET" style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:20px;">
     <div>
       <label style="display:block;font-size:11px;font-weight:600;color:#78909C;margin-bottom:4px;">DESDE</label>
@@ -32,7 +31,6 @@
     <a href="?ini={{ mes_ini }}&fin={{ fin }}" class="btn btn-secondary">Este mes</a>
   </form>
 
-  <!-- Stats del período -->
   <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px;">
     <div class="stat-card">
       <div class="stat-label">Ventas</div>
@@ -52,7 +50,6 @@
     </div>
   </div>
 
-  <!-- Gráficas -->
   <div class="reporte-grid">
     <div class="chart-wrap">
       <div class="chart-title">📈 Ventas por día</div>
@@ -64,9 +61,7 @@
     </div>
   </div>
 
-  <!-- Más vendidos + Historial -->
   <div class="reporte-grid">
-    <!-- Más vendidos -->
     <div class="card" style="padding:0;overflow:hidden;">
       <div style="padding:16px 20px;border-bottom:1px solid #F0F4FA;font-weight:700;font-size:14px;">🏆 Más Vendidos</div>
       <div class="table-wrap" style="border:none;border-radius:0;">
@@ -90,7 +85,6 @@
       </div>
     </div>
 
-    <!-- Historial de ventas -->
     <div class="card" style="padding:0;overflow:hidden;">
       <div style="padding:16px 20px;border-bottom:1px solid #F0F4FA;font-weight:700;font-size:14px;">📋 Historial de Ventas</div>
       <div class="table-wrap" style="border:none;border-radius:0;max-height:340px;overflow-y:auto;">
@@ -125,7 +119,6 @@
 <script>
 const porDia = {{ por_dia|safe }};
 
-// Gráfica de barras
 const labels  = porDia.map(d => d.dia.slice(5));
 const totales = porDia.map(d => d.total);
 
@@ -151,7 +144,6 @@ new Chart(document.getElementById('chart-barras'), {
   }
 });
 
-// Gráfica de métodos de pago
 const efectivo = {{ resumen.efectivo }};
 const tarjeta  = {{ resumen.tarjeta }};
 new Chart(document.getElementById('chart-metodos'), {
