@@ -119,13 +119,13 @@ def admin_dashboard():
 @superadmin_required
 def admin_nueva_tienda():
     if request.method == 'POST':
-        nombre   = request.form.get('nombre', '').strip()
-        ciudad   = request.form.get('ciudad', '').strip()
+        nombre    = request.form.get('nombre', '').strip()
+        ciudad    = request.form.get('ciudad', '').strip()
         direccion = request.form.get('direccion', '').strip()
-        telefono = request.form.get('telefono', '').strip()
-        plan     = request.form.get('plan', 'basico')
-        username = request.form.get('username', '').strip()
-        password = request.form.get('password', '').strip()
+        telefono  = request.form.get('telefono', '').strip()
+        plan      = request.form.get('plan', 'basico')
+        username  = request.form.get('username', '').strip()
+        password  = request.form.get('password', '').strip()
         nombre_admin = request.form.get('nombre_admin', '').strip()
 
         if not nombre or not username or not password:
@@ -516,4 +516,79 @@ def configuracion():
                       hash_pw(request.form.get('password', '')),
                       request.form.get('rol', 'cajero')))
                 flash('Usuario creado.', 'success')
-            except
+            except Exception:
+                flash('Ese usuario ya existe.', 'error')
+
+        elif accion == 'cambiar_password':
+            uid_t = int(request.form.get('usuario_id'))
+            nueva = request.form.get('nueva_password', '').strip()
+            if len(nueva) >= 4:
+                execute('UPDATE usuarios SET password=? WHERE id=? AND tienda_id=?',
+                        (hash_pw(nueva), uid_t, tid))
+                flash('Contraseña actualizada.', 'success')
+            else:
+                flash('Mínimo 4 caracteres.', 'error')
+
+        elif accion == 'eliminar_usuario':
+            uid_t  = int(request.form.get('usuario_id'))
+            admins = query(
+                "SELECT COUNT(*) as n FROM usuarios WHERE tienda_id=? AND rol='admin' AND activo=1",
+                (tid,), one=True
+            )['n']
+            usuario = query('SELECT rol FROM usuarios WHERE id=?', (uid_t,), one=True)
+            if usuario and usuario['rol'] == 'admin' and admins <= 1:
+                flash('No puedes eliminar el único administrador.', 'error')
+            else:
+                execute('UPDATE usuarios SET activo=0 WHERE id=? AND tienda_id=?', (uid_t, tid))
+                flash('Usuario eliminado.', 'success')
+
+        return redirect(url_for('configuracion'))
+
+    tienda   = get_tienda()
+    usuarios = query(
+        "SELECT * FROM usuarios WHERE tienda_id=? AND activo=1 ORDER BY rol, nombre", (tid,)
+    )
+    return render_template('pos/configuracion.html', tienda=tienda, usuarios=usuarios)
+
+
+# ── API Stats ────────────────────────────────────────────────────
+@app.route('/api/dashboard/stats')
+@login_required
+def api_dashboard_stats():
+    tid = session.get('tienda_id')
+    hoy = datetime.date.today().strftime('%Y-%m-%d')
+    v   = query(
+        'SELECT COUNT(*) as n, COALESCE(SUM(total),0) as t FROM ventas WHERE tienda_id=? AND DATE(fecha)=?',
+        (tid, hoy), one=True
+    )
+    sb  = query(
+        'SELECT COUNT(*) as n FROM productos WHERE tienda_id=? AND activo=1 AND stock <= stock_minimo',
+        (tid,), one=True
+    )['n']
+    return jsonify({'num_ventas': v['n'], 'total_dia': round(v['t'], 2), 'stock_alerta': sb})
+
+
+# ── Error handlers ───────────────────────────────────────────────
+@app.errorhandler(404)
+def not_found(e):
+    return render_template('404.html'), 404
+
+@app.errorhandler(500)
+def server_error(e):
+    return render_template('500.html'), 500
+
+
+# ── Init ─────────────────────────────────────────────────────────
+try:
+    with app.app_context():
+        init_db()
+except Exception as e:
+    print(f'⚠ init_db: {e}')
+
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    print('╔══════════════════════════════════╗')
+    print('║   VENTIX WEB  —  POS Sistema     ║')
+    print(f'║   http://localhost:{port}          ║')
+    print('╚══════════════════════════════════╝')
+    app.run(host='0.0.0.0', port=port, debug=False)
