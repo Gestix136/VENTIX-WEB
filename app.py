@@ -180,15 +180,20 @@ def admin_ver_tienda(tid):
         SELECT COUNT(*) as n, COALESCE(SUM(total),0) as total
         FROM ventas WHERE tienda_id=? AND DATE(fecha)=CURRENT_DATE
     ''', (tid,), one=True)
-    ventas_mes = query('''
-        SELECT COUNT(*) as n, COALESCE(SUM(total),0) as total
-        FROM ventas WHERE tienda_id=?
-        AND DATE_TRUNC('month', fecha::timestamp)=DATE_TRUNC('month', CURRENT_DATE)
-    ''', (tid,), one=True) if os.environ.get('DATABASE_URL') else query('''
-        SELECT COUNT(*) as n, COALESCE(SUM(total),0) as total
-        FROM ventas WHERE tienda_id=?
-        AND strftime('%Y-%m', fecha)=strftime('%Y-%m','now')
-    ''', (tid,), one=True)
+
+    if os.environ.get('DATABASE_URL'):
+        ventas_mes = query('''
+            SELECT COUNT(*) as n, COALESCE(SUM(total),0) as total
+            FROM ventas WHERE tienda_id=?
+            AND fecha >= DATE_TRUNC('month', CURRENT_DATE)
+        ''', (tid,), one=True)
+    else:
+        ventas_mes = query('''
+            SELECT COUNT(*) as n, COALESCE(SUM(total),0) as total
+            FROM ventas WHERE tienda_id=?
+            AND strftime('%Y-%m', fecha)=strftime('%Y-%m','now')
+        ''', (tid,), one=True)
+
     total_productos = query(
         'SELECT COUNT(*) as n FROM productos WHERE tienda_id=? AND activo=1', (tid,), one=True
     )['n']
@@ -289,6 +294,30 @@ def api_registrar_venta():
         return jsonify({'ok': True, 'venta_id': vid, 'total': total})
     except Exception as e:
         return jsonify({'ok': False, 'msg': str(e)})
+
+
+# ── TICKET ───────────────────────────────────────────────────────
+@app.route('/ticket/<int:vid>')
+@login_required
+def ver_ticket(vid):
+    tid   = session.get('tienda_id')
+    venta = query('''
+        SELECT v.*, u.nombre as cajero
+        FROM ventas v JOIN usuarios u ON v.usuario_id=u.id
+        WHERE v.id=? AND v.tienda_id=?
+    ''', (vid, tid), one=True)
+    if not venta:
+        flash('Ticket no encontrado.', 'error')
+        return redirect(url_for('pos'))
+    detalle = query('''
+        SELECT p.nombre, dv.cantidad, dv.precio_unitario,
+               dv.cantidad * dv.precio_unitario as subtotal
+        FROM detalle_ventas dv JOIN productos p ON dv.producto_id=p.id
+        WHERE dv.venta_id=?
+    ''', (vid,))
+    tienda = get_tienda()
+    return render_template('pos/ticket.html',
+                           venta=venta, detalle=detalle, tienda=tienda)
 
 
 # ── INVENTARIO ───────────────────────────────────────────────────
