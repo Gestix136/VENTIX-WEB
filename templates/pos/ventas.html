@@ -132,9 +132,14 @@
     <div style="font-size:56px;margin-bottom:12px;">✅</div>
     <div style="font-size:20px;font-weight:800;color:#2E7D32;margin-bottom:6px;">¡Venta Registrada!</div>
     <div id="exito-info" style="color:#546E7A;font-size:14px;line-height:1.8;"></div>
-    <button class="btn btn-success" style="margin-top:20px;width:100%;" onclick="nuevaVenta()">
-      Nueva Venta
-    </button>
+    <div style="display:flex;gap:10px;margin-top:20px;">
+      <button class="btn btn-secondary" style="flex:1;" onclick="verTicket()">
+        🧾 Ver Ticket
+      </button>
+      <button class="btn btn-success" style="flex:1;" onclick="nuevaVenta()">
+        Nueva Venta
+      </button>
+    </div>
   </div>
 </div>
 {% endblock %}
@@ -144,6 +149,7 @@
 let carrito = [];
 let metodo  = 'Efectivo';
 let searchTimer = null;
+let _ultimaVentaId = null;
 
 document.getElementById('searchInput').addEventListener('input', function(){
   clearTimeout(searchTimer);
@@ -291,6 +297,7 @@ async function confirmarCobro(){
   const data = await res.json();
   if(data.ok){
     cerrarModal('modal-cobro');
+    _ultimaVentaId = data.venta_id;
     const cambio = metodo==='Efectivo' ? (recibido - total).toFixed(2) : '—';
     document.getElementById('exito-info').innerHTML = `
       <strong>Venta #${data.venta_id}</strong><br>
@@ -314,6 +321,12 @@ function nuevaVenta(){
   renderCarrito();
   cerrarModal('modal-exito');
   document.getElementById('searchInput').focus();
+}
+
+function verTicket(){
+  if(_ultimaVentaId){
+    window.open('/ticket/' + _ultimaVentaId, '_blank');
+  }
 }
 
 function cerrarModal(id){ document.getElementById(id).classList.remove('active'); }
