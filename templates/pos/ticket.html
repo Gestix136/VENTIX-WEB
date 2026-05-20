@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ticket #{{ venta.id }} — {{ tienda.nombre }}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Courier New', monospace;
+    background: #f0f0f0;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+  }
+  .ticket {
+    background: white;
+    width: 300px;
+    padding: 20px 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.15);
+  }
+  .ticket-header { text-align: center; margin-bottom: 12px; }
+  .ticket-nombre { font-size: 16px; font-weight: bold; text-transform: uppercase; }
+  .ticket-sub { font-size: 11px; color: #555; margin-top: 2px; }
+  .divider { border: none; border-top: 1px dashed #999; margin: 10px 0; }
+  .ticket-info { font-size: 11px; color: #444; margin-bottom: 8px; }
+  .ticket-info span { display: block; }
+  table { width: 100%; font-size: 12px; border-collapse: collapse; }
+  thead th { text-align: left; font-size: 10px; color: #777; padding-bottom: 4px; border-bottom: 1px solid #ddd; }
+  thead th:last-child { text-align: right; }
+  tbody td { padding: 5px 0; vertical-align: top; }
+  tbody td:last-child { text-align: right; white-space: nowrap; }
+  .prod-nombre { font-weight: 600; }
+  .prod-detalle { font-size: 10px; color: #888; }
+  .totales { margin-top: 8px; }
+  .totales-row { display: flex; justify-content: space-between; font-size: 12px; padding: 2px 0; }
+  .totales-row.total { font-size: 15px; font-weight: bold; border-top: 1px dashed #999; padding-top: 6px; margin-top: 4px; }
+  .ticket-footer { text-align: center; font-size: 11px; color: #666; margin-top: 12px; }
+  .btn-imprimir {
+    display: block; width: 100%; margin-top: 20px; padding: 10px;
+    background: #2E7D32; color: white; border: none; border-radius: 8px;
+    font-size: 14px; font-weight: 700; cursor: pointer;
+  }
+  .btn-imprimir:hover { background: #1B5E20; }
+  @media print {
+    body { background: white; padding: 0; }
+    .ticket { box-shadow: none; }
+    .btn-imprimir { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="ticket">
+  <div class="ticket-header">
+    <div class="ticket-nombre">{{ tienda.nombre }}</div>
+    {% if tienda.ciudad %}<div class="ticket-sub">{{ tienda.ciudad }}</div>{% endif %}
+    {% if tienda.direccion %}<div class="ticket-sub">{{ tienda.direccion }}</div>{% endif %}
+    {% if tienda.telefono %}<div class="ticket-sub">Tel: {{ tienda.telefono }}</div>{% endif %}
+  </div>
+
+  <hr class="divider">
+
+  <div class="ticket-info">
+    <span>Ticket #{{ venta.id }}</span>
+    <span>Fecha: {{ venta.fecha }}</span>
+    <span>Cajero: {{ venta.cajero }}</span>
+    <span>Método: {{ venta.metodo_pago }}</span>
+    <span>Caja: {{ venta.caja }}</span>
+  </div>
+
+  <hr class="divider">
+
+  <table>
+    <thead>
+      <tr>
+        <th>Producto</th>
+        <th style="text-align:center;">Cant.</th>
+        <th>Subtotal</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in detalle %}
+      <tr>
+        <td>
+          <div class="prod-nombre">{{ item.nombre }}</div>
+          <div class="prod-detalle">$ {{ "%.2f"|format(item.precio_unitario) }} c/u</div>
+        </td>
+        <td style="text-align:center;">{{ item.cantidad }}</td>
+        <td>$ {{ "%.2f"|format(item.subtotal) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="totales">
+    <div class="totales-row total">
+      <span>TOTAL</span>
+      <span>$ {{ "%.2f"|format(venta.total) }}</span>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="ticket-footer">
+    {{ tienda.mensaje_ticket or '¡Gracias por tu compra!' }}
+  </div>
+
+  <button class="btn-imprimir" onclick="window.print()">🖨 Imprimir Ticket</button>
+</div>
+</body>
+</html>
