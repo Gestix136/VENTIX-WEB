@@ -319,7 +319,10 @@ function cancelarVenta(){
 function nuevaVenta(){
   carrito = [];
   renderCarrito();
-  cerrarModal('modal-exito');
+  const modal = document.getElementById('modal-exito');
+  modal.classList.remove('active');
+  modal.style.display = 'none';
+  setTimeout(() => { modal.style.display = ''; }, 50);
   document.getElementById('searchInput').focus();
 }
 
